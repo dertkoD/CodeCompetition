@@ -13,11 +13,11 @@ namespace BackEndCompetition.Controllers
     [Route("api/competition/user")]
     public class CompetitionUserController : ControllerBase
     {
-        private readonly CompetitionUserRepositories _competitionUserRepositories;
+        private readonly CompetitionUserRepository _competitionUserRepositories;
         private readonly IMapper _mapper;
         private readonly UserHelp _userHelper;
 
-        public CompetitionUserController(CompetitionUserRepositories competitionUserRepositories, IMapper mapper, UserHelp userHelper)
+        public CompetitionUserController(CompetitionUserRepository competitionUserRepositories, IMapper mapper, UserHelp userHelper)
         {
             _competitionUserRepositories = competitionUserRepositories;
             _mapper = mapper;

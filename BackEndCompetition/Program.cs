@@ -1,4 +1,6 @@
+using Auth0.ManagementApi;
 using BackEndCompetition.Authentication;
+using BackEndCompetition.Managment;
 using BackEndCompetition.Services.Logging;
 using CompetitionLibrary.Models;
 using CompetitionLibrary.Repositories;
@@ -36,7 +38,11 @@ builder.Logging.AddFile(Path.Combine(Directory.GetCurrentDirectory(), "logger.lo
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(SqlRepository<>));
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddScoped<UserHelp>(); 
+builder.Services.AddScoped<Auth0Managment>();
+builder.Services.AddScoped<UserHelp>();
+builder.Services.AddScoped<CompetitionTaskCompetRepository>();
+builder.Services.AddScoped<CompetitionRepository>();
+builder.Services.AddScoped<CompetitionUserRepository>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(typeof(MapConfig));

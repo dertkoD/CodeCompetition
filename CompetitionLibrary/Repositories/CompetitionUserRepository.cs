@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace CompetitionLibrary.Repositories
 {
-    public class CompetitionUserRepositories : SqlRepository<CompetitionUser>, IRepository<CompetitionUser>
+    public class CompetitionUserRepository : SqlRepository<CompetitionUser>, IRepository<CompetitionUser>
     {
         private readonly DbCompetContext _context;
 
-        public CompetitionUserRepositories(DbCompetContext context) : base(context)
+        public CompetitionUserRepository(DbCompetContext context) : base(context)
         {
             _context = context;
         }
