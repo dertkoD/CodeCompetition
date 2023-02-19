@@ -1,0 +1,215 @@
+﻿@page "/createdTask"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using TaskCompetitionType = CompetitionLibrary.Enums.TaskTypeEnum
+@using System.Text.Json
+@using Newtonsoft.Json
+@using System.Text
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+
+@inject IGetUserIdAsync UserToken
+@inject Authentication Authentication
+@attribute [Authorize]
+
+<Microsoft.AspNetCore.Components.Forms.EditForm Model="@taskCompetitionDto" OnValidSubmit="SubmitTaskForm">
+	<DataAnnotationsValidator></DataAnnotationsValidator>
+	<div class=" justify-content-start">
+		<div class="col-lg-6">
+			<strong>
+				<h1>
+					<p class="text-center mb-0" style="color: #4682B4">
+						Adding a new task
+					</p>
+				</h1>
+			</strong>
+
+			<div class="card mb-8">
+				<div class="card-body">
+					<div class="form-group">
+
+						<div class="row">
+							<div class="col-sm-3">
+								<label for="TaskName"><strong> <p style="color: #4682B4;  font-size: 125% ">Task name</p></strong></label>
+							</div>
+							<div class="col-sm-8 text-secondary">
+								<InputText id="TaskName" @bind-Value="taskCompetitionDto.TaskName" class="form-control"></InputText>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-sm-3">
+							</div>
+							<div class="col-sm-4 text-secondary">
+								<label for="TaskTypeId"><strong> <p style="color: #4682B4;  font-size: 75% ">Task type</p></strong></label>
+
+								<InputSelect id="TaskTypeId" @bind-Value="taskCompetitionDto.TaskTypeId" class="form-selected">
+									<option value="@((int)TaskCompetitionType.Main)" selected>@TaskCompetitionType.Main</option>
+									<option value="@((int)TaskCompetitionType.Bonus)">@TaskCompetitionType.Bonus</option>
+
+								</InputSelect>
+							</div>
+						</div>
+
+						<br>
+
+						@if (taskCompetitionDto.TaskTypeId == (int)TaskCompetitionType.Bonus)
+						{
+							GetListMainTasks();
+
+							<div class="row">
+								<div class="col-sm-3">
+									<label for="MainTaskId"><strong> <p style="color: #4682B4;  font-size: 125% ">Main task</p></strong></label>
+								</div>
+								<div class="col-sm-4 text-secondary">
+									<InputSelect id="MainTaskId" @bind-Value="taskCompetitionDto.MainTaskId" class="form-selected">
+
+										@foreach (var type in tasksCompetitionDto)
+										{
+											<option value="@type.TaskTypeId">@type.TaskName</option>
+										}
+
+									</InputSelect>
+								</div>
+							</div>
+						}
+
+						<div class="row">
+							<div class="col-sm-3">
+								<label for="TaskDescription"><strong> <p style="color: #4682B4;  font-size: 125% ">Description</p></strong></label>
+							</div>
+							<div class="col-sm-8 text-secondary">
+								<InputTextArea id="TaskDescription" @bind-Value="taskCompetitionDto.TaskDescription" class="form-control Editable"></InputTextArea>
+							</div>
+						</div>
+
+						<hr>
+
+						<div class="row">
+							<div class="col-sm-3">
+								<label for="TaskSolutionTime"><strong> <p style="color: #4682B4;  font-size: 125%">Deadline time</p></strong></label>
+							</div>
+							<div class="col-sm-4 text-secondary">
+								<InputDate id="TaskSolutionTime" Type="InputDateType.Time" @bind-Value="taskCompetitionDto.CreateTime" class="form-control"></InputDate>
+								<p style="color: #ff0000;  font-size: 75%"> In format hh:mm </p>
+							</div>
+
+							<div class="col-sm-1">
+								<label for="TaskPoint">
+									<strong>
+										<p style="color: #4682B4;  font-size: 125%">
+											Point
+										</p>
+									</strong>
+								</label>
+							</div>
+							<div class="col-sm-2 ">
+								<InputNumber id="TaskPoint" @bind-Value="taskCompetitionDto.TaskPoint" class="form-control"></InputNumber>
+							</div>
+						</div>
+
+						<Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+					</div>
+
+					<hr>
+					<div class="row">
+						<div class="col-sm-12 text-center">
+							<button type="submit" class="btn btn-primary">Register</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</Microsoft.AspNetCore.Components.Forms.EditForm>
+
+<Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+	<SnackbarBody>
+		@messageSuccess 
+	</SnackbarBody>
+</Snackbar>
+
+<Snackbar @ref="snackbarError" Multiline=true Interval=100000 Color="SnackbarColor.Danger">
+	<SnackbarBody>
+		@messageError
+	</SnackbarBody>
+</Snackbar>
+
+@code {
+	private Snackbar snackbarSuccess;
+	private Snackbar snackbarError;
+	public string messageSuccess = "";
+	public string messageError = "";
+	private string? token;
+	private UserDto user = new UserDto();
+	private TaskCompetitionDto taskCompetitionDto = new TaskCompetitionDto();
+	private List<TaskCompetitionDto> tasksCompetitionDto = new List<TaskCompetitionDto>();
+	HttpClient client;
+	[Parameter]
+	public User User { get; set; }
+
+	[CascadingParameter] public Task<AuthenticationState> AuthTask { get; set; }
+
+	protected async override Task OnInitializedAsync()
+	{
+		client = Authentication.Authenications(".NetApi");
+		taskCompetitionDto.TaskTypeId = (int)TaskCompetitionType.Main;
+
+		if (taskCompetitionDto.TaskTypeId == (int)TaskCompetitionType.Bonus)
+		{
+			GetListMainTasks();
+		}
+	}
+
+	private async Task GetListMainTasks()
+	{
+		var request = new HttpRequestMessage(HttpMethod.Get, "api/TasksCompetition/mains");
+
+		JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			};
+
+		var response = await client.SendAsync(request);
+		var responseStream = await response.Content.ReadAsStreamAsync();
+
+		tasksCompetitionDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<TaskCompetitionDto>>(responseStream, jsonOptions);
+		StateHasChanged();
+	}
+
+	private async Task SubmitTaskForm()
+	{
+		var userId = await UserToken.GetUserIdAsync();
+		if (userId != null)
+		{
+			taskCompetitionDto.CreateUserId = (int)userId;
+			taskCompetitionDto.UpdateUserId = (int)userId;
+		}
+		else
+		{
+			messageError = "User not fonded in database";
+			snackbarError.Show();
+			return;
+		}
+
+		var json = JsonConvert.SerializeObject(taskCompetitionDto);
+		var data = new StringContent(json, Encoding.UTF8, "application/json");
+		var response = await client.PostAsJsonAsync("api/TasksCompetition/", taskCompetitionDto);
+
+		if ((int)response.StatusCode == StatusCodes.Status200OK)
+		{
+			messageSuccess = "You have been successfully create task";
+			snackbarSuccess.Show();
+		}
+		else
+		{
+			messageError = "Task not creted";
+			snackbarError.Show();
+		}
+	}
+}

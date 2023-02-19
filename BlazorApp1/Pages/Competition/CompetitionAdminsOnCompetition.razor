@@ -1,0 +1,112 @@
+﻿@using CompetitionLibrary.Models
+@using System.Text.Json
+<h3>CompetitionAdminsOnCompetition</h3>
+
+@inject Token Token
+@inject IHttpClientFactory ClientFactory
+@inject Authentication Authentication
+
+@attribute [Authorize]
+
+<AuthorizeView Context="Authorize" Roles="SystemAdmin">
+    <Authorized>
+        <DataGrid TItem="UserDto"
+                  Data="@usersDto"
+                  PageSize=" 10 "
+                  ShowPager
+                  Filterable
+                  FilterMethod=" DataGridFilterMethod .StartsWith "
+                  Hoverable
+                  @bind-SelectedRow="@userDto"
+                  Responsive>
+            <DataGridCommandColumn />
+
+            <DataGridColumn TItem="UserDto" Filterable="false" Caption="">
+                <DisplayTemplate>
+                    @{
+                        var userDto = context as UserDto;
+                        <img src="@userDto.UserAvatar"
+                             class="rounded-circle img-fluid"
+                             style="width: 40px;">
+                    }
+                </DisplayTemplate>
+            </DataGridColumn>
+
+            <DataGridCommandColumn />
+            <DataGridColumn TItem="UserDto" Field="@nameof(userDto.UserFirstName)" Caption="Name">
+                <DisplayTemplate>
+                    @{
+                        var userDto = context as UserDto;
+
+                        <a href="/users/userpage/@userDto.UserId">@userDto.UserFirstName @userDto.UserSecondName </a>
+                    }
+                </DisplayTemplate>
+            </DataGridColumn>
+
+            <DataGridCommandColumn />AssignCompetitionAdmin
+
+            <DataGridColumn TItem="UserDto" Field="@nameof(userDto.UserId)" Filterable="false" Caption="Assign Competition Admin">
+                <DisplayTemplate>
+                    @{
+                        var userDto = context as UserDto;
+                        <button @onclick="() => AssignCompetitionAdminOnCompetition(userDto.UserId)" class="btn btn-primary">Assign Competition Admin</button>
+                    }
+                </DisplayTemplate>
+            </DataGridColumn>
+
+        </DataGrid>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int competitionId { get; set; }
+    private string loading = "";
+    private List<UserDto> usersDto = new List<UserDto>();
+    [Parameter]
+    public UserDto userDto { get; set; }
+    private string token;
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/management/competitionAdmins/");
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        usersDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<UserDto>>(responseStream, jsonOptions);
+
+        if (usersDto == null)
+        {
+            loading = "Loading not posible";
+        }
+        else 
+        { 
+            loading = "Loading done"; 
+        }
+
+        await base.OnInitializedAsync();
+
+        loading = "Loading done";
+    }
+
+
+    private async Task AssignCompetitionAdminOnCompetition(int CompetitionUser)
+    {
+        var competitionUserDto = new CompetitionUserDto() { CompetitionId = competitionId, UserId = CompetitionUser };
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.PostAsJsonAsync("api/competition/user", competitionUserDto);
+    }
+}

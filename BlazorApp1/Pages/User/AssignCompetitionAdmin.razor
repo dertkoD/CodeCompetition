@@ -1,0 +1,140 @@
+﻿@page "/AssignCompetitionAdmin"
+@using CompetitionLibrary.Models
+@using System.Text.Json
+
+@inject Token Token
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager NavigationManager
+@inject Authentication Authentication
+
+@attribute [Authorize]
+
+   <AuthorizeView Context="Authorize" Roles="SystemAdmin">
+        <Authorized>
+            <h3>Assign Moderator</h3>
+
+<DataGrid TItem="UserDto"
+          Data="@usersDto"
+          PageSize = " 10 " 
+          ShowPager
+          Filterable
+          FilterMethod=" DataGridFilterMethod .StartsWith "
+          Hoverable
+          @bind-SelectedRow="@userDto"
+       
+          Responsive>
+    <DataGridCommandColumn />
+
+
+        <DataGridColumn TItem="UserDto" Filterable="false" Caption="">
+            <DisplayTemplate>
+                @{
+                    var userDto = context as UserDto;
+                      <img src="@userDto.UserAvatar" 
+                          onError="this.src='https://cdn-icons-png.flaticon.com/512/5024/5024509.png'" 				
+                      class="rounded-circle img-fluid" 
+                      style="width: 40px;">;
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+
+                <DataGridCommandColumn />
+        <DataGridColumn TItem="UserDto" Field="@nameof(userDto.UserFirstName)" Caption="Name">
+                <DisplayTemplate>
+                @{
+                    var userDto = context as UserDto;
+                   
+                               <a href="/users/userpage/@userDto.UserId" >@userDto.UserFirstName @userDto.UserSecondName </a>
+                }
+                </DisplayTemplate>
+            </DataGridColumn>
+
+                 <DataGridColumn Field="@nameof(userDto.TeamName)" Caption="Team" Sortable="true" />
+
+                       <DataGridCommandColumn />
+
+            <DataGridColumn TItem="UserDto" Field="@nameof(userDto.CreateTime)" Caption="Date of registration">
+                <DisplayTemplate>
+                    @{
+                        var userDto = context as UserDto;
+                        @userDto.CreateTime.ToShortDateString()
+                    }
+                </DisplayTemplate>
+            </DataGridColumn>
+
+            <DataGridColumn TItem="UserDto" Field="@nameof(userDto.UserAuth0Id)" Filterable="false" Caption="Assign role">
+                <DisplayTemplate>
+                @{
+                    var userDto = context as UserDto;
+                        <button @onclick="() => AssignCompetitionAdminInAuth(userDto.UserAuth0Id)" class="btn btn-primary">Assign moderator</button>                
+                }
+                    </DisplayTemplate>
+                </DataGridColumn>
+   
+</DataGrid>
+
+        </Authorized >
+    </AuthorizeView>
+
+@code {
+
+    private string loading = "";
+    private List<UserDto> usersDto = new List<UserDto>();
+    [Parameter]
+    public UserDto userDto { get; set; }
+    private string token;
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get,
+             "api/management/simple_users/");
+
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+
+        var response = await client.SendAsync(request);
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        usersDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<UserDto>>(responseStream, jsonOptions);
+
+        if (usersDto == null)
+        {
+            loading = "Loading not posible";
+        }
+        else 
+        { 
+            loading = "Loading done"; 
+        }
+
+        await base.OnInitializedAsync();
+
+        loading = "Loading done";
+    }
+
+
+    private async Task AssignCompetitionAdminInAuth(string auth0Id)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post,
+             "api/management/assignModerator?userId=" + auth0Id);
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+
+        var response = await client.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("assignModerator/");
+        }
+    }
+}

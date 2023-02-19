@@ -1,0 +1,198 @@
+﻿@using System.IdentityModel.Tokens.Jwt
+@using CompetitionLibrary.Models
+@using Newtonsoft.Json
+@using System.Text
+@using System.Text.Json
+@attribute [Authorize]
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Authentication Authentication
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthorizationService AuthService
+@inject IHttpClientFactory ClientFactory
+@inject NavigationManager navManager
+@inject NavigationManager NavigationManager
+
+<Microsoft.AspNetCore.Components.Forms.EditForm Model="user" OnValidSubmit="SubmitUserForm" >
+<DataAnnotationsValidator></DataAnnotationsValidator>
+ <div class=" justify-content-start">    
+	 <div class="col-lg-6">
+			<strong>
+				<h1>
+					<p class="text-center mb-0" style="color: #4682B4">
+						User registration
+					</p>
+				</h1> 
+			</strong>     
+ 
+		<div class="card mb-8">
+			<div class="card-body text-center">
+				  <img src="@user.UserAvatar" 
+                  class="rounded-circle img-fluid" 
+				  style="width: 150px;">
+				<div class="d-flex justify-content-center mb-4"></div>
+			</div>
+			<div class="form-group">
+			  <div class="card-body">
+		
+				<div class="row">
+					<div class="col-sm-3">
+						<label for="Avatar"><strong> <p style="color: #4682B4;  font-size: 150% ">Avatar</p></strong></label>
+					</div>
+					<div class="col-sm-8 text-secondary">
+						<InputText id="Avatar" @bind-Value="user.UserAvatar" class="form-control "></InputText> 
+					</div>
+				</div>
+
+				<hr>		
+
+				<div class="row">
+					<div class="col-sm-3">
+						<label for="FirstName"><strong> <p style="color: #4682B4;  font-size: 150% ">First name</p></strong></label>
+					</div>
+						<div class="col-sm-8 text-secondary">
+							<InputText  id="FirstName" @bind-Value="user.UserFirstName" class="form-control" ></InputText> 
+							<ValidationMessage For="@(() => user.UserFirstName)" />
+						</div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-3">
+						<label for="SecondName"><strong> <p style="color: #4682B4;  font-size: 150% ">Second name</p></strong></label>
+					</div>
+					<div class="col-sm-8 text-secondary">
+						<InputText id="SecondName" @bind-Value="user.UserSecondName" class="form-control "></InputText> 
+						<ValidationMessage For="@(() => user.UserSecondName)" />
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-3">
+						<label for="Birthday"><strong> <p style="color: #4682B4;  font-size: 150%">Date of Birth</p></strong></label>
+					</div>
+					<div class="col-sm-4 text-secondary">		
+						<InputDate id="Birthday" @bind-Value="user.UserBirthday" class="form-control"></InputDate>	
+						<ValidationMessage For="@(() => user.UserBirthday)" />
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-sm-3">
+						<label for="GitHub">
+							<strong>
+								<p style="color: #4682B4;  font-size: 150%">
+								<i class="fab fa-github fa-lg" style="color: #333333;"></i> GitHub</p>
+							</strong>
+						</label>
+					</div>
+					<div class="col-sm-8 text-secondary">
+						<InputText id="GitHub" @bind-Value="user.UserGitHub" class="form-control "></InputText> 
+					</div>
+				</div>
+						<Microsoft.AspNetCore.Components.Forms.ValidationSummary />
+
+				<hr>
+								
+				<div class="row">
+					<div class="col-sm-12 text-center">
+						@if (!context.Validate() || user.UserFirstName == "")
+						{
+							<button type="submit" class="btn btn-primary" disabled>Register </button>
+						}
+						else
+						{
+							<button type="submit" class="btn btn-primary">Register </button>
+						}
+					</div>
+				</div>
+			  </div>
+			</div>
+		</div>
+	 </div>
+ </div>
+</Microsoft.AspNetCore.Components.Forms.EditForm>
+
+<Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+  <SnackbarBody >
+	You have been successfully registered. To access the functions of the platform, you need to  <a href="logout">re-login</a>
+	 
+  </SnackbarBody>
+</Snackbar>
+
+<Snackbar @ref="snackbarError" Multiline=true Interval=100000 Color="SnackbarColor.Danger">
+  <SnackbarBody >
+		@message 
+  </SnackbarBody>
+</Snackbar>
+
+@code {
+	private Snackbar snackbarSuccess;
+	private Snackbar snackbarError;
+	public string token;
+	private string message = "";
+
+	private DateTimeOffset? Value { get; set; } = DateTimeOffset.Now;
+
+	private string email;
+	private string avatar;
+	private string user_auth0_id;
+	private string roleName;
+	HttpClient client;
+
+	private UserDto user = new UserDto();
+
+	protected async override Task OnInitializedAsync()
+	{
+		client = Authentication.Authenications(".NetApi");
+		var tokenHandler = new JwtSecurityTokenHandler();
+
+		email = HttpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value;
+		avatar = HttpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "picture")?.Value;
+		user_auth0_id = HttpContextAccessor.HttpContext.User.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+		user.UserAvatar = avatar;
+		user.UserBirthday = DateTime.Now;
+	}
+
+	private async Task SubmitUserForm()
+	{
+		user.UpdateUserId = 2;
+		user.UserEmail = email;
+		user.UserAuth0Id = user_auth0_id;
+
+		var json = JsonConvert.SerializeObject(user);
+		var data = new StringContent(json, Encoding.UTF8, "application/json");
+		var response = await client.PostAsJsonAsync("api/Users/", user);
+		JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+			{
+				PropertyNameCaseInsensitive = true
+			};
+
+		if ((int)response.StatusCode == StatusCodes.Status200OK)
+		{
+			await AssignRole();
+			snackbarSuccess.Show();
+			NavigationManager.NavigateTo("/");
+		}
+		else
+		{
+			message = "Error. Try ";
+			snackbarError.Show();
+		}
+	}
+
+	private async Task AssignRole()
+	{
+		var request = new HttpRequestMessage(HttpMethod.Post, "api/management/autoAssign");
+
+		var response2 = await client.SendAsync(request);
+		var responseStream = await response2.Content.ReadAsStreamAsync();
+	}
+}
+
+
+
+
+

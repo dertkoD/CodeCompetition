@@ -1,0 +1,116 @@
+﻿@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthorizationService AuthService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject Authentication Authentication
+
+@if (loading != "Loading done")
+{
+    <p style="font-size: 35px"> <em>Loading...</em></p>
+    <img src="css/open-iconic/gif/LD.gif" />
+}
+else
+{
+    <DataGrid TItem="UserDto"
+          Data="@usersDto"
+          PageSize=" 10 "
+          ShowPager
+          Filterable
+          FilterMethod=" DataGridFilterMethod .StartsWith "
+          Hoverable
+          @bind-SelectedRow="@userDto"
+          SelectedRowStyling="@OnSelectedRowStyling"
+          Responsive>
+        <DataGridCommandColumn />
+
+        <DataGridColumn TItem="UserDto" Filterable="false" Caption="">
+            <DisplayTemplate>
+                @{
+                    var userDto = context as UserDto;
+                    <img src="@userDto.UserAvatar"
+                     class="rounded-circle img-fluid"
+                     style="width: 40px;">
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+        <DataGridCommandColumn />
+        <DataGridColumn TItem="UserDto" Field="@nameof(userDto.UserFirstName)" Caption="Name">
+            <DisplayTemplate>
+                @{
+                    var userDto = context as UserDto;
+
+                    <a href="/users/userpage/@userDto.UserId">@userDto.UserFirstName @userDto.UserSecondName </a>
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+        <DataGridColumn Field="@nameof(userDto.TeamName)" Caption="Team" Sortable="true" />
+
+        <DataGridCommandColumn />
+
+        <DataGridColumn TItem="UserDto" Field="@nameof(userDto.CreateTime)" Caption="Date of registration">
+            <DisplayTemplate>
+                @{
+                    var userDto = context as UserDto;
+
+                    @userDto.CreateTime.ToShortDateString()
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+    </DataGrid>
+}
+
+@code {
+    private int counter = 1;
+    private string loading = "";
+    private List<UserDto>? usersDto = new List<UserDto>();
+    [Parameter]
+    public int competitionId { get; set; }
+    [Parameter]
+    public UserDto userDto { get; set; }
+    private string? token;
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/Competitions/Users/" + competitionId);
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        usersDto = await JsonSerializer.DeserializeAsync<List<UserDto>>(responseStream, jsonOptions);
+
+        if (usersDto == null)
+        {
+            loading = "Loading not possible";
+        }
+        else 
+        { 
+            loading = "Loading done"; 
+        }
+
+        await base.OnInitializedAsync();
+        loading = "Loading done";
+    }
+
+    private static void OnSelectedRowStyling(UserDto userDto, DataGridRowStyling styling)
+    {
+        styling.Background = Background.Success;
+    }
+}

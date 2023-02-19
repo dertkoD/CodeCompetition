@@ -9,11 +9,89 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+
+        <AuthorizeView Roles="SystemAdmin, CompetitionAdmin, Customer">
+            <Authorized>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="competitions" Match="NavLinkMatch.All">
+                    <span class="oi" aria-hidden="true"><Blazorise.Icon Name="IconName.LaptopCode" />  </span> Competitions
+                    </NavLink>
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Customer, CompetitionAdmin">
+            <Authorized>
+                  
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/Users/listusers">
+                    <span class="oi" aria-hidden="true"><Blazorise.Icon Name="IconName.UserFriends" /> </span> Users
+                    </NavLink>
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="SystemAdmin">
+            <Authorized>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" @onclick="()=>expandSubMenuUsers= !expandSubMenuUsers">
+                        <span class="oi" aria-hidden="true"><Blazorise.Icon Name="IconName.Users" /></span> Users
+                    </NavLink>
+
+                    @if (expandSubMenuUsers)
+                    {
+                        <ul class="nav flex-column">
+                             <div class="nav-item px-3">
+                                 <NavLink class="nav-link" href="/Users/listusers">
+                                     <span class="oi" aria-hidden="true"><Blazorise.Icon Name="IconName.Users" /></span> List users
+                                 </NavLink>
+                             </div>
+
+                             <div class="nav-item px-3">
+                                 <NavLink class="nav-link" href="AssignCompetitionAdmin">
+                                     <span class="oi " aria-hidden="true"><Blazorise.Icon Name="IconName.Edit" /></span> Assign panel
+                                 </NavLink>
+                             </div>
+                        </ul>
+                    }
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="SystemAdmin, CompetitonAdmin, Customer">
+            <Authorized>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/Teams">
+                        <span class="oi" aria-hidden="true"><Blazorise.Icon Name="IconName.Users" /></span> Teams
+                    </NavLink>                    
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="SystemAdmin, CompetitonAdmin">
+            <Authorized>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Tasks">
+                        <span class="oi" aria-hidden="true"><Blazorise.Icon Name="IconName.Briefcase" /></span> Tasks
+                    </NavLink>
+                </div>
+
+            </Authorized>
+        </AuthorizeView>
     </nav>
 </div>
 
@@ -26,4 +104,7 @@
     {
         collapseNavMenu = !collapseNavMenu;
     }
+
+    private bool expandSubMenuUsers;
+    private bool expandSubMenuTeam;
 }

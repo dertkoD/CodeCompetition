@@ -1,0 +1,162 @@
+﻿@page "/Competitions/competition/{competitionId:int}"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject Authentication Authentication
+@attribute [Authorize]
+
+@if (competitionDto == null)
+{
+    <p style="font-size: 35px"> <em>Loading...</em></p>
+    <img src="css/open-iconic/gif/LD.gif" />
+}
+else
+{
+    <span>
+        <h3>competition: <b>@competitionDto.CompetitionName</b>
+        </h3>
+    </span>
+
+<Tabs SelectedTab="@selectedTab" SelectedTabChanged="@OnSelectedTabChanged">
+    <Items>
+        <Tab Name="Information">Information</Tab>
+        <Tab Name="Members">Members</Tab>
+
+        <AuthorizeView Context="Authorize" Roles="SystemAdmin">
+    <Authorized>
+        <Tab Name="Settings">Settings</Tab>
+        <Tab Name="Distribution by teams">Distribution by teams </Tab>
+        <Tab Name="CompetitionAdmins">CompetitionAdmins</Tab>
+        <Tab Name="addTeams">Add teams</Tab>
+        <Tab Name="addTasks">Add tasks</Tab>
+               
+    </Authorized>
+  </AuthorizeView>
+    </Items>
+    <Content>
+        <TabPanel Name="Information">
+                <Information hackatonsId=@competitionId />
+        </TabPanel>
+
+        <TabPanel Name="addTasks">
+                <AddTask hackatonsId=@competitionId />
+        </TabPanel>
+
+        <TabPanel Name="Members">
+              <Members hackatonsId=@competitionId />
+        </TabPanel>
+
+        <TabPanel Name="addTeams">
+              <TeamCompetition hackatonsId=@competitionId />
+        </TabPanel>
+
+            
+        <AuthorizeView Context="Authorize" Roles="SystemAdmin">
+            <Authorized>
+
+                <TabPanel Name="CompetitionAdmins">
+                    <CompetitionAdminsOnCompetition hackatonsId=@competitionId />
+                </TabPanel>
+
+                <TabPanel Name="settings">
+                    Content for settings.
+                </TabPanel>
+      
+            </Authorized>
+        </AuthorizeView>
+    </Content>
+</Tabs>
+
+    <Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+        <SnackbarBody>
+            @messageSuccess
+        </SnackbarBody>
+    </Snackbar>
+
+    <Snackbar @ref="snackbarError" Multiline=true Interval=5000 Color="SnackbarColor.Danger">
+        <SnackbarBody>
+            @messageError
+        </SnackbarBody>
+    </Snackbar>
+}
+
+@code {
+    public string messageSuccess = "";
+    public string messageError = "";
+    private Snackbar? snackbarSuccess;
+    private Snackbar? snackbarError;
+    [Parameter]
+    public CompetitionDto competitionDto { get; set; }
+    private string? token;
+    string selectedTab = "profile";
+    [Parameter]
+    public int competitionId { get; set; }
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get,
+              "api/Competitions/Tasks/" + competitionId);
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        var eventJson = await System.Text.Json.JsonSerializer.DeserializeAsync
+                     <dynamic>(responseStream, jsonOptions);
+
+        competitionDto = JsonConvert.DeserializeObject<CompetitionDto>(eventJson.ToString());
+        await base.OnInitializedAsync();
+    }
+
+    private Task OnSelectedTabChanged(string name)
+    {
+        selectedTab = name;
+        return Task.CompletedTask;
+    }
+
+    private async Task JoinCompetition()
+    {
+        var userId = await UserToken.GetUserIdAsync();
+        var competitionUserDto = new CompetitionUserDto() { CompetitionId = competitionId, UserId = (int)userId };
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.PostAsJsonAsync("api/competition/user", competitionUserDto);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = " You joined competition!";
+            
+            snackbarSuccess.Show();
+            competitionDto.IsParticipant = true;
+            StateHasChanged();
+        }
+        else
+        {
+            messageError = "Error: You not joined!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+}

@@ -1,13 +1,19 @@
-﻿<CascadingAuthenticationState>
+﻿@inject NavigationManager navManager
+
+
+<CascadingAuthenticationState>
+
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+
                 <Authorizing>
                     <p>Determining session state, please wait...</p>
                 </Authorizing>
                 <NotAuthorized>
-                    <h1>Sorry</h1>
-                    <p>You're not authorized to reach this page. You need to log in.</p>
+                    <h2>Welcome to Competition app!</h2>
+                    <p>Please log in to access the content.</p>
+                    <meta http-equiv="refresh" content="5;https://localhost:7189/">
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -19,4 +25,6 @@
             </LayoutView>
         </NotFound>
     </Router>
+    <PageProgressProvider />
+
 </CascadingAuthenticationState>

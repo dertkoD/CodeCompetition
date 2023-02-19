@@ -1,0 +1,236 @@
+﻿@page "/users/userpage/{UserId:int}"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+
+@attribute [Authorize]
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@inject Authentication Authentication
+
+@if (userDto == null)
+{
+    <p style="font-size: 35px"> <em>Loading...</em></p>
+    <img src="css/open-iconic/gif/LD.gif" />
+}
+else
+{
+    <div class=" justify-content-start">
+        <div>
+            <div class="container py-3">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <img src="@userDto.UserAvatar"
+                                 alt="avatar"
+                                 class="rounded-circle img-fluid" style="width: 150px;">
+                                <h5 class="my-3">@userDto.UserFirstName @userDto.UserSecondName</h5>
+                                <div class="d-flex justify-content-center mb-4">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-6 mb-lg-0">
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush rounded-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                        <i class="fab fa-github fa-lg" style="color: #333333;"></i>
+                                        <p class="mb-0">
+                                            @if (userDto.UserGitHub == null)
+                                            {
+                                                <span>no link</span>
+                                            }
+                                            else
+                                            {
+                                                @userDto.UserGitHub
+                                            }
+                                        </p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Full Name</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@userDto.UserFirstName @userDto.UserSecondName</p></strong>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Email</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@userDto.UserEmail</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Team</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong>
+                                            <p class="text-muted-25 mb-0" style="color: #4682B4">
+                                                @if (userDto.TeamId == null)
+                                                {
+                                                    <span style="color: gray">no team</span>
+                                                }
+                                                else
+                                                {
+                                                    @userDto.TeamName;
+                                                }
+                                            </p>
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Date of registration</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@userDto.CreateTime.ToShortDateString()</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Date of birthday</p>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <a class="btn btn-primary" target="__blank" href="">Edit</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-4 mb-md-0">
+                                    <div class="card-body">
+                                        <strong>
+                                            <p class="mb-4">
+                                                <span class="text-muted-25 mb-0" style="color: #4682B4">Task</span> statistics
+                                            </p>
+                                        </strong>
+                                        <p class="mb-1" style="font-size: .77rem;">Average % of points scored from the maximum for the task</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 80%" aria-valuenow="80"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                                <strong>80%</strong>
+                                            </div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 72%" aria-valuenow="72"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 89%" aria-valuenow="89"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 55%" aria-valuenow="55"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
+                                        <div class="progress rounded mb-2" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 66%" aria-valuenow="66"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-4 mb-md-0">
+                                    <div class="card-body">
+                                        <strong>
+                                            <p class="mb-4">
+                                                <span class="text-muted-25 mb-0" style="color: #4682B4">Competition</span> statistics
+                                            </p>
+                                        </strong>
+                                        <p class="mb-1" style="font-size: .77rem;">Web Design</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar  progress-bar-striped progress-bar-animated" role="progressbar" style="width: 80%" aria-valuenow="80"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                                <strong>80%</strong>
+                                            </div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 72%" aria-valuenow="72"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 89%" aria-valuenow="89"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
+                                        <div class="progress rounded" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 55%" aria-valuenow="55"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
+                                        <div class="progress rounded mb-2" style="height: 15px;">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 66%" aria-valuenow="66"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string? token;
+    HttpClient client;
+    [Parameter]
+    public int userId { get; set; }
+    [Parameter]
+    public UserDto userDto { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/Users/");
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        request = new HttpRequestMessage(HttpMethod.Get, "api/Users/" + userId);
+
+        var response = await client.SendAsync(request);
+
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        var usersJson = await System.Text.Json.JsonSerializer.DeserializeAsync<dynamic>(responseStream, jsonOptions);
+
+        userDto = JsonConvert.DeserializeObject<UserDto>(usersJson.ToString());
+    }
+}

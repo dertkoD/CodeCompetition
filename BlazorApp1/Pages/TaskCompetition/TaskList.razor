@@ -1,0 +1,193 @@
+﻿@page "/Tasks"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+@using System.Text
+@using System.Net.Http.Headers
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@attribute [Authorize]
+@inject Authentication Authentication
+
+<h3>List task</h3>
+
+<DataGrid TItem="TaskCompetitionDto"
+          Data="@tasksCompetitionDto"
+          PageSize=" 10 "
+          ShowPager
+          Filterable
+          Hoverable
+          Editable
+          FilterMethod=" DataGridFilterMethod .StartsWith "
+          @bind-SelectedRow="@taskCompetitionDto"
+          EditMode="DataGridEditMode.Popup"
+          SelectedRowStyling="@OnSelectedRowStyling"
+          Responsive
+          CommandMode="DataGridCommandMode.ButtonRow"
+          RowInserted="@CreateTask"
+          RowRemoved="@DeleteTask"
+          UseValidation
+          ShowValidationsSummary="true"
+          ShowValidationFeedback="true">
+
+    <DataGridColumns>
+
+        <DataGridCommandColumn NewCommandAllowed="false" EditCommandAllowed="false" DeleteCommandAllowed="false">
+            <SaveCommandTemplate>
+                <Blazorise.Bootstrap.Button ElementId="btnSave" Type="ButtonType.Submit" PreventDefaultOnSubmit Color="Color.Primary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+            </SaveCommandTemplate>
+            <CancelCommandTemplate>
+                <Blazorise.Bootstrap.Button ElementId="btnCancel" Color="Color.Secondary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+            </CancelCommandTemplate>
+        </DataGridCommandColumn>
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(taskCompetitionDto.TaskName)" Caption="Name Task" Sortable="true" Editable />
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(taskCompetitionDto.TaskDescription)" Caption="Description" Sortable="true" Editable Displayable=false />
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(taskCompetitionDto.CreateUserId)" Caption="Description" Sortable="true" Displayable=false />
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(taskCompetitionDto.UpdateUserId)" Caption="Description" Sortable="true" Displayable=false />
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(taskCompetitionDto.TaskPoint)" Caption="Point" Editable Sortable="true" />
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(taskCompetitionDto.TaskSolutionTime)" Caption="Execution time" Editable Sortable="true">
+            <DisplayTemplate>
+                @{
+                    var taskCompetitionDto = context as TaskCompetitionDto;
+
+                    @(taskCompetitionDto.TaskSolutionTime.Minutes + taskCompetitionDto.TaskSolutionTime.Hours * 60)
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+        <DataGridColumn TItem="TaskCompetitionDto" Field="@nameof(TaskCompetitionDto.CreateTime)" Caption="Date of registration">
+            <DisplayTemplate>
+                @{
+                    var taskCompetitionDto= context as TaskCompetitionDto;
+
+                    @taskCompetitionDto.CreateTime.ToShortDateString()
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+    </DataGridColumns>
+
+    <ButtonRowTemplate>
+        <Blazorise.Bootstrap.Button Color="Color.Success" Clicked="context.NewCommand.Clicked">New</Blazorise.Bootstrap.Button>
+        <Blazorise.Bootstrap.Button Color="Color.Danger" Disabled="(taskCompetitionDto is null)" Clicked="context.DeleteCommand.Clicked">Delete</Blazorise.Bootstrap.Button>
+        <Blazorise.Bootstrap.Button Color="Color.Link" Clicked="context.ClearFilterCommand.Clicked">Clear Filter</Blazorise.Bootstrap.Button>
+    </ButtonRowTemplate>
+</DataGrid>
+
+<Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+    <SnackbarBody>
+        @messageSuccess
+    </SnackbarBody>
+</Snackbar>
+
+<Snackbar @ref="snackbarError" Multiline=true Interval=3000 Color="SnackbarColor.Danger">
+    <SnackbarBody>
+        @messageError
+    </SnackbarBody>
+</Snackbar>
+
+@code {
+    private Snackbar? snackbarSuccess;
+    private Snackbar? snackbarError;
+    private List<TaskCompetitionDto> tasksCompetitionDto = new List<TaskCompetitionDto>();
+    [Parameter]
+    public TaskCompetitionDto? taskCompetitionDto { get; set; }
+    private string token;
+    private UserDto user = new UserDto();
+    public string messageSuccess = "";
+    public string messageError = "";
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/TasksCompetition/");
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        tasksCompetitionDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<TaskCompetitionDto>>(responseStream, jsonOptions);
+    }
+
+    private void OnSelectedRowStyling(TaskCompetitionDto taskCompetitionDto, DataGridRowStyling styling)
+    {
+        styling.Background = Background.Success;
+    }
+
+    private async Task CreateTask(SavedRowItem<TaskCompetitionDto, Dictionary<string, object>> rowInserted)
+    {
+        var newTask = rowInserted.Item;
+
+        var userId = await UserToken.GetUserIdAsync();
+        if (userId != null)
+        {
+            newTask.TaskTypeId = 1;
+            newTask.CreateUserId = (int)userId;
+            newTask.UpdateUserId = (int)userId;
+        }
+        else
+        {
+            messageError = "User not fonded in database";
+            snackbarError.Show();
+            return;
+        }
+
+        var json = JsonConvert.SerializeObject(newTask);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await client.PostAsJsonAsync("api/TasksCompetition/", newTask);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Task created!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: Task not created!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+
+    private async void DeleteTask(TaskCompetitionDto rowRemoved)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"api/TasksCompetition/?TaskId={rowRemoved.TaskId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.SendAsync(request);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Task deleted!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: Task not deleted!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+}
+

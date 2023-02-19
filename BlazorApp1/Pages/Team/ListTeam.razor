@@ -1,0 +1,179 @@
+﻿@page "/Teams"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+@using System.Text
+@using System.Net.Http.Headers
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@attribute [Authorize]
+@inject Authentication Authentication
+
+<h3>List teams</h3>
+
+<DataGrid TItem="TeamDto"
+          Data="@teamsDto"
+          PageSize=" 10 "
+          ShowPager
+          Filterable
+          Hoverable
+          Editable
+          FilterMethod=" DataGridFilterMethod .StartsWith "
+          @bind-SelectedRow="@teamDto"
+          EditMode="DataGridEditMode.Popup"
+          SelectedRowStyling="@OnSelectedRowStyling"
+          Responsive
+          CommandMode="DataGridCommandMode.ButtonRow"
+          RowInserted="@CreateTeam"
+          RowRemoved="@DeleteTeam"
+          UseValidation
+          ShowValidationsSummary="true"
+          ShowValidationFeedback="true">
+
+    <DataGridColumns>
+
+        <DataGridCommandColumn NewCommandAllowed="false" EditCommandAllowed="false" DeleteCommandAllowed="false">
+            <SaveCommandTemplate>
+                <Blazorise.Bootstrap.Button ElementId="btnSave" Type="ButtonType.Submit" PreventDefaultOnSubmit Color="Color.Primary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+            </SaveCommandTemplate>
+            <CancelCommandTemplate>
+                <Blazorise.Bootstrap.Button ElementId="btnCancel" Color="Color.Secondary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+            </CancelCommandTemplate>
+        </DataGridCommandColumn>
+
+        <DataGridColumn TItem="TeamDto" Field="@nameof(team.TeamAvatar)" Caption="URL avatar" Filterable="false" Editable Sortable="false">
+            <DisplayTemplate>
+                @{
+                    var team = context as TeamDto;
+                        <img src="@team.TeamAvatar"
+                             class="rounded-circle img-fluid"
+                             style="width: 40px;">
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+        <DataGridColumn TItem="TeamDto" Field="@nameof(team.TeamName)" Caption="Name team" Editable Sortable="true" />
+
+    </DataGridColumns>
+
+    <ButtonRowTemplate>
+        <Blazorise.Bootstrap.Button Color="Color.Success" Clicked="context.NewCommand.Clicked">New</Blazorise.Bootstrap.Button>
+        <Blazorise.Bootstrap.Button Color="Color.Danger" Disabled="(teamDto is null)" Clicked="context.DeleteCommand.Clicked">Delete</Blazorise.Bootstrap.Button>
+        <Blazorise.Bootstrap.Button Color="Color.Link" Clicked="context.ClearFilterCommand.Clicked">Clear Filter</Blazorise.Bootstrap.Button>
+    </ButtonRowTemplate>
+</DataGrid>
+
+<Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+    <SnackbarBody>
+        @messageSuccess
+    </SnackbarBody>
+</Snackbar>
+
+<Snackbar @ref="snackbarError" Multiline=true Interval=3000 Color="SnackbarColor.Danger">
+    <SnackbarBody>
+        @messageError
+    </SnackbarBody>
+</Snackbar>
+
+@code {
+    private Snackbar? snackbarSuccess;
+    private Snackbar? snackbarError;
+
+    public List<TeamDto> teamsDto = new List<TeamDto>();
+    [Parameter]
+    public TeamDto? teamDto { get; set; }
+    private string token;
+    private TeamDto team = new TeamDto();
+    public string messageSuccess = "";
+    public string messageError = "";
+    [Parameter]
+    public int teamId { get; set; }
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/Teams/");
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        teamsDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<TeamDto>>(responseStream, jsonOptions);
+    }
+
+    private void OnSelectedRowStyling(TeamDto teamDto, DataGridRowStyling styling)
+    {
+        styling.Background = Background.Success;
+    }
+
+    private async Task CreateTeam(SavedRowItem<TeamDto, Dictionary<string, object>> rowInserted)
+    {
+        var newTeam = rowInserted.Item;
+
+        var userId = await UserToken.GetUserIdAsync();
+        if (userId != null)
+        {
+            newTeam.CreateUserId = (int)userId;
+            newTeam.UpdateUserId = (int)userId;
+            newTeam.TeamId = teamId;
+        }
+        else
+        {
+            messageError = "User not fonded in database";
+            snackbarError.Show();
+            return;
+        }
+
+        var json = JsonConvert.SerializeObject(newTeam);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await client.PostAsJsonAsync("api/Teams/", newTeam);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Team created!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: Team not created!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+
+    private async void DeleteTeam(TeamDto rowRemoved)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"api/?teamId={rowRemoved.TeamId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.SendAsync(request);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Team deleted!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: Team not deleted!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+}
+
+

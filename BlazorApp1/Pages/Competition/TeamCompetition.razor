@@ -1,0 +1,181 @@
+﻿@page "/TeamCompetition"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+@using System.Text
+@using System.Net.Http.Headers
+
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@attribute [Authorize]
+@inject Authentication Authentication
+
+<h3>List teams</h3>
+
+<DataGrid TItem="CompetitionTeamDto"
+          Data="@competitionTeamsDto"
+          PageSize=" 10 "
+          ShowPager
+          Editable
+          Filterable
+          Hoverable
+          FilterMethod=" DataGridFilterMethod .StartsWith "
+          @bind-SelectedRow="@competitionTeamDto"
+          EditMode="DataGridEditMode.Popup"
+          SelectedRowStyling="@OnSelectedRowStyling"
+          Responsive
+          CommandMode="DataGridCommandMode.ButtonRow"
+          RowInserted="@CreateTeam"
+          RowRemoved="@DeleteTeam"
+          UseValidation
+          ShowValidationsSummary="true"
+          ShowValidationFeedback="true">
+
+    <DataGridColumns>
+
+        <DataGridCommandColumn NewCommandAllowed="false" DeleteCommandAllowed="false">
+            <SaveCommandTemplate>
+                <Blazorise.Bootstrap.Button ElementId="btnSave" Type="ButtonType.Submit" PreventDefaultOnSubmit Color="Color.Primary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+            </SaveCommandTemplate>
+            <CancelCommandTemplate>
+                <Blazorise.Bootstrap.Button ElementId="btnCancel" Color="Color.Secondary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+            </CancelCommandTemplate>
+        </DataGridCommandColumn>
+
+        <DataGridColumn TItem="CompetitionTeamDto" Field="@nameof(competitionTeam.CompetitionTeamAvatar)" Caption="URL avatar" Filterable="false" Sortable="false" Editable>
+            <DisplayTemplate>
+                @{
+                    var competitionTeam = context as CompetitionTeamDto;
+                    <img src="@competitionTeam.CompetitionTeamAvatar"
+                         class="rounded-circle img-fluid"
+                         style="width: 40px;">;
+                }
+            </DisplayTemplate>
+        </DataGridColumn>
+
+        <DataGridColumn TItem="CompetitionTeamDto" Field="@nameof(competitionTeam.CompetitionTeamName)" Caption="Name team" Sortable="true" Editable />
+
+    </DataGridColumns>
+
+    <ButtonRowTemplate>
+        <Blazorise.Bootstrap.Button Color="Color.Success" Clicked="context.NewCommand.Clicked">New</Blazorise.Bootstrap.Button>
+        <Blazorise.Bootstrap.Button Color="Color.Danger" Disabled="(competitionTeamDto is null)" Clicked="context.DeleteCommand.Clicked">Delete</Blazorise.Bootstrap.Button>
+        <Blazorise.Bootstrap.Button Color="Color.Link" Clicked="context.ClearFilterCommand.Clicked">Clear Filter</Blazorise.Bootstrap.Button>
+    </ButtonRowTemplate>
+</DataGrid>
+
+
+<Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+    <SnackbarBody>
+        @messageSuccess
+    </SnackbarBody>
+</Snackbar>
+
+<Snackbar @ref="snackbarError" Multiline=true Interval=3000 Color="SnackbarColor.Danger">
+    <SnackbarBody>
+        @messageError
+    </SnackbarBody>
+</Snackbar>
+
+@code {
+    private Snackbar? snackbarSuccess;
+    private Snackbar? snackbarError;
+    public List<CompetitionTeamDto> competitionTeamsDto = new List<CompetitionTeamDto>();
+    [Parameter]
+    public CompetitionTeamDto? competitionTeamDto { get; set; }
+    private string token;
+    private CompetitionTeamDto competitionTeam = new CompetitionTeamDto();
+    public string messageSuccess = "";
+    public string messageError = "";
+    [Parameter]
+    public int competitionId { get; set; }
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/Competition/Teams/" + competitionId);
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        competitionTeamsDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<CompetitionTeamDto>>(responseStream, jsonOptions);
+    }
+
+    private void OnSelectedRowStyling(CompetitionTeamDto competitionTeamDto, DataGridRowStyling styling)
+    {
+        styling.Background = Background.Success;
+    }
+
+    private async Task CreateTeam(SavedRowItem<CompetitionTeamDto, Dictionary<string, object>> rowInserted)
+    {
+        var newTeam = rowInserted.Item;
+
+        var userId = await UserToken.GetUserIdAsync();
+        if (userId != null)
+        {
+            newTeam.CompetitionId = competitionId;
+        }
+        else
+        {
+            messageError = "User not fonded in database";
+            snackbarError.Show();
+            return;
+        }
+
+        var json = JsonConvert.SerializeObject(newTeam);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await client.PostAsJsonAsync("api/Competition/Teams/", newTeam);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Team created!";
+            snackbarSuccess.Show();
+        }
+
+        else
+        {
+            messageError = "Error: Team not created!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+
+    private async void DeleteTeam(CompetitionTeamDto rowRemoved)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete,
+            $"api/Competitions/?taskCompetitionId={rowRemoved.CompetitionTeamId}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.SendAsync(request);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Task deleted!";
+            snackbarSuccess.Show();
+        }
+
+        else
+        {
+            messageError = "Error: Task not deleted!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+}
+
+

@@ -1,0 +1,240 @@
+﻿@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@inject Authentication Authentication
+
+@if (competitionDto == null)
+{
+    <p style="font-size: 35px"> <em>Loading...</em></p>
+    <img src="css/open-iconic/gif/LD.gif" />
+}
+else
+{
+    <div class=" justify-content-start">
+        <div>
+            <div class="container py-3">
+                <div class="row">
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <img src="@competitionDto.CompetitionUrlAvatar"
+                                 alt="avatar"
+                                 class="rounded-circle img-fluid" style="width: 150px;">
+                                <h5 class="my-3">@competitionDto.CompetitionName</h5>
+
+                                <AuthorizeView Context="Authorize" Roles="Simple_user">
+                                    <Authorized>
+                                        @if (competitionDto.IsParticipant == false)
+                                        {
+                                            <button @onclick="() => JoinCompetition(competitionId)" class="btn btn-default p-1 btn-primary">Join</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => LeaveCompetition(competitionId)" class="btn btn-default p-1 btn-danger">Leave</button>
+                                        }
+                                    </Authorized>
+                                </AuthorizeView>
+
+                                <div class="d-flex justify-content-center mb-4">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-6 mb-lg-0">
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush rounded-3">
+
+                                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                        <i style="color: #333333;">   <p class="mb-0"><b>Description:</b>@competitionDto.CompetitionDescription</p></i>
+                                    </li>
+
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Full Name</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.CompetitionName</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Time start</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.CompetitionStartTime</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Time end</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.CompetitionEndTime</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Number of participants</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.NumberOfUsers</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Max participants</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.CompetitionMaxCountOfCompetitionMembers</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Max participants in team</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.CompetitionMaxCountOfTeamMembers</p></strong>
+                                    </div>
+                                </div>
+
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <p class="mb-0">Min participants in team</p>
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <strong> <p class="text-muted-25 mb-0" style="color: #4682B4">@competitionDto.CompetitionMinCountOfTeamMembers</p></strong>
+                                    </div>
+                                </div>
+                                <hr>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+        <SnackbarBody>
+            @messageSuccess
+        </SnackbarBody>
+    </Snackbar>
+
+    <Snackbar @ref="snackbarError" Multiline=true Interval=5000 Color="SnackbarColor.Danger">
+        <SnackbarBody>
+            @messageError
+        </SnackbarBody>
+    </Snackbar>
+}
+
+@code {
+    public string messageSuccess = "";
+    public string messageError = "";
+    private Snackbar? snackbarSuccess;
+    private Snackbar? snackbarError;
+    private string? token;
+    HttpClient client;
+    [Parameter]
+    public UserDto userDto { get; set; }
+    [Parameter]
+    public CompetitionDto competitionDto { get; set; }
+    [Parameter]
+    public int competitionId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/Users/");
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        request = new HttpRequestMessage(HttpMethod.Get, "api/Competitions/Tasks/" + competitionId);
+
+        var response = await client.SendAsync(request);
+
+        var responseStream = await response.Content.ReadAsStreamAsync();
+
+        var usersJson = await System.Text.Json.JsonSerializer.DeserializeAsync
+                     <dynamic>(responseStream, jsonOptions);
+
+        competitionDto = JsonConvert.DeserializeObject<CompetitionDto>(usersJson.ToString());
+    }
+
+    private async Task JoinCompetition(int competitionId)
+    {
+        var userId = await UserToken.GetUserIdAsync();
+        var competitionUserDto = new CompetitionUserDto() { CompetitionId = competitionId, UserId = (int)userId };
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.PostAsJsonAsync("api/event/user", competitionUserDto);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = " You joined!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: You not joined!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task LeaveCompetition(int competitionId)
+    {
+        var userId = await UserToken.GetUserIdAsync();
+        var competitionUserDto = new CompetitionUserDto() { CompetitionId = competitionId, UserId = (int)userId };
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.DeleteAsync("api/competition/user{}");
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "You joined!";
+            snackbarError.Show();
+        }
+        else
+        {
+            messageError = "Error: You not joined!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+}

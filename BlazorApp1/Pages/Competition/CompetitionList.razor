@@ -1,0 +1,349 @@
+﻿@page "/competitions"
+@using BlazorApp1.Models
+@using CompetitionLibrary.Models
+@using System.Text.Json
+@using Newtonsoft.Json
+@using System.Text
+
+@attribute [Authorize]
+@inject IHttpClientFactory ClientFactory
+@inject HttpClient Http
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IGetUserIdAsync UserToken
+@inject Token Token
+@inject Authentication Authentication
+@inject NavigationManager NavigationManager
+
+<h3>List Competition</h3>
+
+@if (loading != "Loading done")
+{
+    <p style="font-size: 35px"> <em>Loading...</em></p>
+    <img src="css/open-iconic/gif/LD.gif" />
+}
+else
+{
+    <DataGrid TItem="CompetitionDto"
+          Data="@competitionsDto"
+          PageSize=" 10 "
+          ShowPager        
+          Filterable
+          Hoverable
+          Editable
+          FilterMethod=" DataGridFilterMethod.StartsWith "
+          EditMode="DataGridEditMode.Popup"
+          SelectedRowStyling="@OnSelectedRowStyling"
+          Responsive
+          CommandMode="DataGridCommandMode.ButtonRow"
+          RowInserted="@CreateCompetiton"
+          RowRemoved="@DeleteCompetition"
+          UseValidation
+          ShowValidationsSummary="true"
+          ShowValidationFeedback="true">
+
+        <DataGridColumns>
+
+            <DataGridCommandColumn NewCommandAllowed="false" DeleteCommandAllowed="false">
+                <SaveCommandTemplate>
+                    <Blazorise.Bootstrap.Button ElementId="btnSave" Type="ButtonType.Submit" PreventDefaultOnSubmit Color="Color.Primary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+                </SaveCommandTemplate>
+                <CancelCommandTemplate>
+                    <Blazorise.Bootstrap.Button ElementId="btnCancel" Color="Color.Secondary" Clicked="@context.Clicked">@context.LocalizationString</Blazorise.Bootstrap.Button>
+                </CancelCommandTemplate>
+            </DataGridCommandColumn>
+
+            <AuthorizeView Context="Authorize" Roles="Customer, CompetitionAdmin, SystemAdmin">
+                <Authorized>
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionUrlAvatar)" Caption="URL avatar" Filterable="false" Sortable="false" Editable>
+                        <DisplayTemplate>
+                            @{
+                                var eventDtoAdmin = context as CompetitionDto;
+                                <img src="@eventDtoAdmin.CompetitionUrlAvatar"
+                                 class="rounded-circle img-fluid"
+                                 style="width: 40px;">
+                            }
+                        </DisplayTemplate>
+                    </DataGridColumn>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Context="Authorize" Roles="Simple_user">
+                <Authorized>
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionId)" Caption="Join" Filterable="false" Sortable="false">
+                        <DisplayTemplate>
+                            @{
+                                var competitionDto = context as CompetitionDto;
+                                if (competitionDto.IsParticipant == false)
+                                {
+                                    <button @onclick="async () => await JoinCompetition(competitionDto.CompetitionId )" style="width: 70px" class="btn btn-primary">Join</button>
+                                }
+                                else
+                                {
+                                    <button @onclick="async () => await LeaveCompetition(competitionDto.CompetitionId)" style="width: 70px" class="btn btn-danger">Leave</button>
+                                }
+                            }
+                        </DisplayTemplate>
+                    </DataGridColumn>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Context="Authorize" Roles="Customer, CompetitionAdmin, SystemAdmin">
+                <Authorized>
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionDescription)" Caption="Description" Sortable="true" Editable Displayable=false />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionName)" Caption="Name" Sortable="true"  Editable>
+                        <DisplayTemplate>
+                            @{
+                                var competitionDto = context as CompetitionDto;
+
+                                <a href="/Competitions/competition/@competitionDto.CompetitionId">@competitionDto.CompetitionName </a>
+                            }
+                        </DisplayTemplate>
+                    </DataGridColumn>
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionStartTime)" Caption="Start time" Sortable="true" Editable />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionEndTime)" Caption="End time" Sortable="true" Editable />
+
+                    <DataGridColumn TItem="CompetitionDto" Caption="Participants" Filterable="false">
+
+                        <DisplayTemplate>
+                            @{
+                                var competitionDto = context as CompetitionDto;
+
+                                if (competitionDto.CompetitionMaxCountOfCompetitionMembers > 0)
+                                {
+                                    <p> @competitionDto.NumberOfUsers <b>/</b> @competitionDto.CompetitionMaxCountOfCompetitionMembers</p>
+                                }
+                                else
+                                {
+                                    <p> @competitionDto.NumberOfUsers <b>/</b> ∞ </p>
+                                }
+                            }
+                        </DisplayTemplate>
+
+                    </DataGridColumn>
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionMaxCountOfTeamMembers)" Caption="Max team size" Editable Filterable="false" Displayable=false />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionMinCountOfTeamMembers)" Caption="Min team size" Editable Filterable="false" Displayable=false />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionMaxCountOfCompetitionMembers)" Caption="Max number of participants" Editable Displayable=false Filterable="false" />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionMinCountOfCompetitionMembers)" Caption="Min number of participants" Editable Displayable=false Filterable="false" />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionCreatedDate)" Caption="Publication date" Editable Sortable="true" />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CreateUserId)" Caption="CreateUserId" Displayable=false />
+
+                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.UpdateUserId)" Caption="UpdateUserId" Displayable=false />
+
+                </Authorized>
+            </AuthorizeView>
+
+        </DataGridColumns>
+
+        <ButtonRowTemplate>
+
+            <AuthorizeView Context="Authorize" Roles="SystemAdmin">
+                <Authorized>
+
+                    <Blazorise.Bootstrap.Button Color="Color.Success" Clicked="context.NewCommand.Clicked">New</Blazorise.Bootstrap.Button>
+                    <Blazorise.Bootstrap.Button Color="Color.Danger" Disabled="(competitionDto is null)" Clicked="context.DeleteCommand.Clicked">Delete</Blazorise.Bootstrap.Button>
+
+                </Authorized>
+            </AuthorizeView>
+
+            <Blazorise.Bootstrap.Button Color="Color.Link" Clicked="context.ClearFilterCommand.Clicked">Clear Filter</Blazorise.Bootstrap.Button>
+
+        </ButtonRowTemplate>
+
+    </DataGrid>
+}
+
+<Snackbar @ref="snackbarSuccess" Multiline=true Interval=100000 Color="SnackbarColor.Success">
+    <SnackbarBody>
+        @messageSuccess
+    </SnackbarBody>
+</Snackbar>
+
+<Snackbar @ref="snackbarError" Multiline=true Interval=5000 Color="SnackbarColor.Danger">
+    <SnackbarBody>
+        @messageError
+    </SnackbarBody>
+</Snackbar>
+
+@code {
+    private Snackbar? snackbarSuccess;
+    private Snackbar? snackbarError;
+    private List<CompetitionDto> competitionsDto = new List<CompetitionDto>();
+    [Parameter]
+    public CompetitionDto? competitionDto { get; set; }
+    private string? token;
+    private UserDto user = new UserDto();
+    public string messageSuccess = "";
+    public string messageError = "";
+    public string loading = "loading";
+    HttpClient client;
+
+    protected override async Task OnInitializedAsync()
+    {
+        client = Authentication.Authenications(".NetApi");
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/Competitions");
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            competitionsDto = await System.Text.Json.JsonSerializer.DeserializeAsync<List<CompetitionDto>>(responseStream, jsonOptions);
+        }
+        else
+        {
+            messageError = "Error: data not found";
+            snackbarError.Show();
+        }
+
+        loading = "Loading done";
+    }
+
+    private void OnSelectedRowStyling(CompetitionDto competitionDto, DataGridRowStyling styling)
+    {
+        styling.Background = Background.Success;
+    }
+
+    private async Task CreateCompetiton(SavedRowItem<CompetitionDto, Dictionary<string, object>> rowInserted)
+    {
+        var newCompetition = rowInserted.Item;
+
+        var userId = await UserToken.GetUserIdAsync();
+        if (userId != null)
+        {
+            newCompetition.CompetitionStatusId = 1;
+            newCompetition.CreateUserId = (int)userId;
+            newCompetition.UpdateUserId = (int)userId;
+        }
+        else
+        {
+            messageError = "User not fonded in database";
+            snackbarError.Show();
+            return;
+        }
+
+        var json = JsonConvert.SerializeObject(newCompetition);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var response = await client.PostAsJsonAsync("api/Competitions/addCompetition", newCompetition);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Competiton created!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: Competiton not created!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+
+    private async void DeleteCompetition(CompetitionDto rowRemoved)
+    {
+        var userId = await UserToken.GetUserIdAsync();
+        if (userId != null)
+        {
+            rowRemoved.UpdateUserId = (int)userId;
+        }
+        else
+        {
+            messageError = "User not fonded in database";
+            snackbarError.Show();
+            return;
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Delete,
+        $"api/Competitions/?competitionId={rowRemoved.CompetitionId}");
+
+        var response = await client.SendAsync(request);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            messageSuccess = "Competition deleted!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: Competition not deleted!";
+            snackbarError.Show();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task JoinCompetition(int competitionId)
+    {
+        var userId = await UserToken.GetUserIdAsync();
+        var competitionUserDto = new CompetitionUserDto() { CompetitionId = competitionId, UserId = (int)userId };
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var response = await client.PostAsJsonAsync("api/competition/user", competitionUserDto);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
+            messageSuccess = "You joined!";
+            snackbarSuccess.Show();
+        }
+        else
+        {
+            messageError = "Error: You not joined!";
+            snackbarError.Show();
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task LeaveCompetition(int competitionId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, "api/competition/user");
+        var userId = await UserToken.GetUserIdAsync();
+        var competitionUserDto = new CompetitionUserDto() { CompetitionId = competitionId, UserId = (int)userId };
+
+        JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+        var userEvent = new StringContent(JsonConvert.SerializeObject(competitionUserDto), Encoding.UTF8, "application/json");
+        request.Content = userEvent;
+        var response = await client.SendAsync(request);
+
+        if ((int)response.StatusCode == StatusCodes.Status200OK)
+        {
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
+            messageSuccess = "You leave!";
+            snackbarSuccess.Show();
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
+        }
+        else
+        {
+            messageError = "Error: You not leave!";
+            snackbarError.Show();
+            NavigationManager.NavigateTo(NavigationManager.Uri, true);
+        }
+
+        StateHasChanged();
+    }
+}

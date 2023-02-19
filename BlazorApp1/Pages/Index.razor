@@ -1,40 +1,22 @@
 ﻿@page "/"
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims;
 
-@inject AuthenticationStateProvider AuthState
-@inject BlazorApp1.Data.Repository.IRepository repository ;
+@inject NavigationManager uriHelper;
+@inject NavigationManager NavigationManager
 @attribute [Authorize]
+@inject Authentication Authentication
+
+<AuthorizeView Policy="NoRolePolicy">
+    <Authorized >    
+       <PageTitle>Registration</PageTitle>
+                 <Registration /> 
+    </Authorized>
+</AuthorizeView>
+
+<AuthorizeView>
+
+  <NotAuthorized>
+  </NotAuthorized>
+     
+ </AuthorizeView>
 
 <PageTitle>Index</PageTitle>
-<h1>Welcome, @Username!</h1>
-You can only see this content if you're authenticated.
-<br />
-<img src="@Picture">
-
-@code {
-    private string Username = "Anonymous User";
-    private string Picture = "";
-
-    protected override async Task OnInitializedAsync()
-    {
-        var state = await AuthState.GetAuthenticationStateAsync();
-
-        Username = state.User.Identity.Name ?? string.Empty;
-
-        Picture = state.User.Claims
-                    .Where(c => c.Type.Equals("picture"))
-                    .Select(c => c.Value)
-                    .FirstOrDefault() ?? string.Empty;
-
-        string firstName = Username.Split(' ')[0];
-        string secondName = Username.Split(' ')[1];
-        var email = state.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-
-        //repository.AddCustomer();
-
-        await base.OnInitializedAsync();
-    }
-}
