@@ -22,7 +22,7 @@ namespace BackEndCompetition.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> AssignMission(CompetitionTaskCompetDto newCompetitionTaskCompet)
+        public async Task<JsonResult> AssignTaskCompetition(CompetitionTaskCompetDto newCompetitionTaskCompet)
         {
             try
             {

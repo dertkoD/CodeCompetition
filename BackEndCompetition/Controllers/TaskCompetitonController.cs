@@ -61,7 +61,7 @@ namespace BackEndCompetition.Controllers
 
         [HttpPost]
         [Authorize(Roles = "SystemAdmin")]
-        public async Task<JsonResult> PostMission(TaskCompetitionDto newTaskCompetition)
+        public async Task<JsonResult> PostTaskCompetition(TaskCompetitionDto newTaskCompetition)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace BackEndCompetition.Controllers
 
         [HttpDelete]
         [Authorize(Roles = "SystemAdmin")]
-        public async Task<JsonResult> DeleteMission(int taskCompetitionId)
+        public async Task<JsonResult> DeleteTaskCompetition(int taskCompetitionId)
         {
             try
             {
@@ -97,7 +97,7 @@ namespace BackEndCompetition.Controllers
 
         [HttpPut]
         [Authorize(Roles = "SystemAdmin")]
-        public async Task<JsonResult> UpdateMission(TaskCompetitionDto newTaskCompetitionDto)
+        public async Task<JsonResult> UpdateTaskCompetition(TaskCompetitionDto newTaskCompetitionDto)
         {
             try
             {

@@ -61,7 +61,7 @@ namespace BackEndCompetition.Controllers
 
 		[HttpGet("CompetitionAdmins")]
 		[Authorize(Roles = "SystemAdmin")]
-		public async Task<JsonResult> GetModerators()
+		public async Task<JsonResult> GetCompetitionAdmin()
 		{
 			try
 			{
