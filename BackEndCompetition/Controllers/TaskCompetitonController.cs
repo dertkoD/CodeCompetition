@@ -100,8 +100,8 @@ namespace BackEndCompetition.Controllers
         {
             try
             {
-                var mission = _mapper.Map<TaskCompetition>(newTaskCompetitionDto);
-                await _dbRepositories.Update(mission.TaskId, mission);
+                var taskCompetition = _mapper.Map<TaskCompetition>(newTaskCompetitionDto);
+                await _dbRepositories.Update(taskCompetition.TaskId, taskCompetition);
                 return new JsonResult(Ok("Update is complete"));
             }
             catch (Exception e)

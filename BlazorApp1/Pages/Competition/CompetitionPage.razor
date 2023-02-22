@@ -66,10 +66,6 @@ else
                 <TabPanel Name="CompetitionAdmins">
                         <CompetitionAdminsOnCompetition competitionId=@competitionId />
                 </TabPanel>
-
-                <TabPanel Name="settings">
-                    Content for settings.
-                </TabPanel>
       
             </Authorized>
         </AuthorizeView>
@@ -117,10 +113,10 @@ else
 
         var responseStream = await response.Content.ReadAsStreamAsync();
 
-        var eventJson = await System.Text.Json.JsonSerializer.DeserializeAsync
+        var competitionJson = await System.Text.Json.JsonSerializer.DeserializeAsync
                      <dynamic>(responseStream, jsonOptions);
 
-        competitionDto = JsonConvert.DeserializeObject<CompetitionDto>(eventJson.ToString());
+        competitionDto = JsonConvert.DeserializeObject<CompetitionDto>(competitionJson.ToString());
         await base.OnInitializedAsync();
     }
 

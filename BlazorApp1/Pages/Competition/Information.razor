@@ -193,7 +193,7 @@ else
                 PropertyNameCaseInsensitive = true
             };
 
-        var response = await client.PostAsJsonAsync("api/event/user", competitionUserDto);
+        var response = await client.PostAsJsonAsync("api/competitions/user", competitionUserDto);
 
         if ((int)response.StatusCode == StatusCodes.Status200OK)
         {
@@ -219,7 +219,7 @@ else
                 PropertyNameCaseInsensitive = true
             };
 
-        var response = await client.DeleteAsync("api/competition/user{}");
+        var response = await client.DeleteAsync("api/competitions/user{}");
 
         if ((int)response.StatusCode == StatusCodes.Status200OK)
         {

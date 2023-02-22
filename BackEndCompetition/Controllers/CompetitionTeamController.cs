@@ -33,7 +33,7 @@ namespace BackEndCompetition.Controllers
             {
                 var competitionTeams = await _dbRepositories.Where(hackathon => hackathon.CompetitionId == competitionId).GetAll();
                 var competitionTeamsDbo = _mapper.Map<List<CompetitionTeamDto>>(competitionTeams);
-                _logger.LogInformation("get teams from event");
+                _logger.LogInformation("get teams from competition");
                 return new JsonResult(Ok(competitionTeamsDbo).Value);
 
             }

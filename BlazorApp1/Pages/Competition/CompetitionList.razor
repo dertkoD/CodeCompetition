@@ -330,40 +330,4 @@ else
 
         StateHasChanged();
     }
-
-    //private async Task UpdateCompetition(int competitionId)
-    //{
-    //    var newCompetition = rowInserted.Item;
-
-    //    var userId = await UserToken.GetUserIdAsync();
-    //    if (userId != null)
-    //    {
-    //        newCompetition.CompetitionStatusId = 1;
-    //        newCompetition.CreateUserId = (int)userId;
-    //        newCompetition.UpdateUserId = (int)userId;
-    //    }
-    //    else
-    //    {
-    //        messageError = "User not fonded in database";
-    //        snackbarError.Show();
-    //        return;
-    //    }
-
-    //    var json = JsonConvert.SerializeObject(newCompetition);
-    //    var data = new StringContent(json, Encoding.UTF8, "application/json");
-    //    var response = await client.PostAsJsonAsync("api/Competitions/addCompetition", newCompetition);
-
-    //    if ((int)response.StatusCode == StatusCodes.Status200OK)
-    //    {
-    //        messageSuccess = "Competiton created!";
-    //        snackbarSuccess.Show();
-    //    }
-    //    else
-    //    {
-    //        messageError = "Error: Competiton not created!";
-    //        snackbarError.Show();
-    //    }
-
-    //    StateHasChanged(); ();
-    //}
 }

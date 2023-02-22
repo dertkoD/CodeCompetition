@@ -114,7 +114,7 @@ namespace BackEndCompetition.Controllers
 
 		[HttpPost("AssignCompetitionAdmin")]
 		[Authorize(Roles = "SystemAdmin")]
-		public async Task<JsonResult> AssignModerator(string userId)
+		public async Task<JsonResult> AssignCompetitionAdmin(string userId)
 		{
 			try
 			{

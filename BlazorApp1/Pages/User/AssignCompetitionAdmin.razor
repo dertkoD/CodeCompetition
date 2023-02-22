@@ -11,19 +11,19 @@
 
    <AuthorizeView Context="Authorize" Roles="SystemAdmin">
         <Authorized>
-            <h3>Assign Moderator</h3>
+            <h3>Assign Competition Admin</h3>
 
-<DataGrid TItem="UserDto"
-          Data="@usersDto"
-          PageSize = " 10 " 
-          ShowPager
-          Filterable
-          FilterMethod=" DataGridFilterMethod .StartsWith "
-          Hoverable
-          @bind-SelectedRow="@userDto"
+            <DataGrid TItem="UserDto"
+                Data="@usersDto"
+                PageSize = " 10 " 
+                ShowPager
+                Filterable
+                FilterMethod=" DataGridFilterMethod .StartsWith "
+                Hoverable
+                @bind-SelectedRow="@userDto"
        
           Responsive>
-    <DataGridCommandColumn />
+            <DataGridCommandColumn />
 
 
         <DataGridColumn TItem="UserDto" Filterable="false" Caption="">
@@ -67,7 +67,7 @@
                 <DisplayTemplate>
                 @{
                     var userDto = context as UserDto;
-                        <button @onclick="() => AssignCompetitionAdminInAuth(userDto.UserAuth0Id)" class="btn btn-primary">Assign moderator</button>                
+                        <button @onclick="() => AssignCompetitionAdminInAuth(userDto.UserAuth0Id)" class="btn btn-primary">Assign competition admin</button>                
                 }
                     </DisplayTemplate>
                 </DataGridColumn>
@@ -89,9 +89,7 @@
     protected override async Task OnInitializedAsync()
     {
         client = Authentication.Authenications(".NetApi");
-        var request = new HttpRequestMessage(HttpMethod.Get,
-             "api/management/simple_users/");
-
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/management/getCustomers/");
 
         JsonSerializerOptions jsonOptions = new JsonSerializerOptions
             {
@@ -122,7 +120,7 @@
     private async Task AssignCompetitionAdminInAuth(string auth0Id)
     {
         var request = new HttpRequestMessage(HttpMethod.Post,
-             "api/management/assignModerator?userId=" + auth0Id);
+             "api/management/AssignCompetitionAdmin?userId=" + auth0Id);
 
         JsonSerializerOptions jsonOptions = new JsonSerializerOptions
             {
@@ -134,7 +132,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            NavigationManager.NavigateTo("assignModerator/");
+            NavigationManager.NavigateTo("AssignCompetitionAdmin/");
         }
     }
 }
