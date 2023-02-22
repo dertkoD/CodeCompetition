@@ -29,14 +29,14 @@ namespace BackEndCompetition.Controllers
         {
             try
             {
-                var eventUser = _mapper.Map<CompetitionUser>(competitionUserDto);
-                eventUser.CreateTime = DateTime.UtcNow;
-                eventUser.UpdateTime = DateTime.UtcNow;
+                var competitionUser = _mapper.Map<CompetitionUser>(competitionUserDto);
+                competitionUser.CreateTime = DateTime.UtcNow;
+                competitionUser.UpdateTime = DateTime.UtcNow;
                 var userId = await _userHelper.GetId();
-                eventUser.CreateUserId = userId;
-                eventUser.UpdateUserId = userId;
-                eventUser.ObjStatusId = (int)EnumStatus.Active;
-                var user = await _competitionUserRepositories.Create(eventUser);
+                competitionUser.CreateUserId = userId;
+                competitionUser.UpdateUserId = userId;
+                competitionUser.ObjStatusId = (int)EnumStatus.Active;
+                var user = await _competitionUserRepositories.Create(competitionUser);
                 return new JsonResult(Ok());
             }
             catch (Exception e)
@@ -47,7 +47,7 @@ namespace BackEndCompetition.Controllers
 
         [HttpDelete]
         [Authorize]
-        public async Task<JsonResult> DeleteUserFromEvent(CompetitionUserDto competitionUserDto)
+        public async Task<JsonResult> DeleteUserFromCompetition(CompetitionUserDto competitionUserDto)
         {
             try
             {

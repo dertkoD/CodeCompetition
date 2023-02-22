@@ -310,8 +310,8 @@ else
                 PropertyNameCaseInsensitive = true
             };
 
-        var userEvent = new StringContent(JsonConvert.SerializeObject(competitionUserDto), Encoding.UTF8, "application/json");
-        request.Content = userEvent;
+        var userCompetition = new StringContent(JsonConvert.SerializeObject(competitionUserDto), Encoding.UTF8, "application/json");
+        request.Content = userCompetition;
         var response = await client.SendAsync(request);
 
         if ((int)response.StatusCode == StatusCodes.Status200OK)

@@ -1,4 +1,5 @@
 ﻿using CompetitionLibrary.Repositories;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CompetitionLibrary.Models
 {
@@ -47,6 +48,10 @@ namespace CompetitionLibrary.Models
         public virtual User CreateUser { get; set; } = null!;
 
         public virtual User UpdateUser { get; set; } = null!;
-		public int ObjStatusId { get; set; }
-	}
+
+        [ForeignKey("ObjStatus")]
+        public int ObjStatusId { get; set; }
+
+        public StatusObj ObjStatus { get; set; }
+    }
 }

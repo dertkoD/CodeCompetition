@@ -13,7 +13,7 @@ namespace CompetitionLibrary.Repositories
 
         public async Task<Competition> GetCompetitionTasks(int competitionId)
         {
-            var dbCompetitions = await Get("CompetitionTaskCompet.Task")
+            var dbCompetitions = await Get("CompetitionTasksCompet.Task")
                 .Where(a => a.CompetitionId == competitionId).GetOne();
             return dbCompetitions;
         }

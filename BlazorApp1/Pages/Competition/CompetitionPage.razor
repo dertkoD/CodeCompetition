@@ -44,19 +44,19 @@ else
     </Items>
     <Content>
         <TabPanel Name="Information">
-                <Information hackatonsId=@competitionId />
+                <Information competitionId=@competitionId />
         </TabPanel>
 
         <TabPanel Name="addTasks">
-                <AddTask hackatonsId=@competitionId />
+                <AddTask competitionId=@competitionId />
         </TabPanel>
 
         <TabPanel Name="Members">
-              <Members hackatonsId=@competitionId />
+                <Members competitionId=@competitionId />
         </TabPanel>
 
         <TabPanel Name="addTeams">
-              <TeamCompetition hackatonsId=@competitionId />
+                <TeamCompetition competitionId=@competitionId />
         </TabPanel>
 
             
@@ -64,7 +64,7 @@ else
             <Authorized>
 
                 <TabPanel Name="CompetitionAdmins">
-                    <CompetitionAdminsOnCompetition hackatonsId=@competitionId />
+                        <CompetitionAdminsOnCompetition competitionId=@competitionId />
                 </TabPanel>
 
                 <TabPanel Name="settings">
