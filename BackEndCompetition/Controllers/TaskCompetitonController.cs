@@ -85,7 +85,6 @@ namespace BackEndCompetition.Controllers
             try
             {
                 await _dbRepositories.Delete(taskCompetitionId, await _userHelper.GetId());
-
                 return new JsonResult(Ok("Task was deleted"));
             }
             catch (Exception e)
