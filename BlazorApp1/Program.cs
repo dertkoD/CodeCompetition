@@ -12,8 +12,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-builder.Services.AddHttpClient(".NetApi",
-    configureClient => configureClient.BaseAddress = new Uri(builder.Configuration[".NetApi"]));
+builder.Services.AddHttpClient(".NetApi", configureClient => configureClient.BaseAddress = new Uri(builder.Configuration[".NetApi"]));
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
