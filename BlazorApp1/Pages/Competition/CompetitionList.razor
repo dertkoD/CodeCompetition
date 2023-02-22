@@ -11,7 +11,6 @@
 @inject AuthenticationStateProvider AuthState
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IGetUserIdAsync UserToken
-@inject Token Token
 @inject Authentication Authentication
 @inject NavigationManager NavigationManager
 
@@ -53,22 +52,7 @@ else
                 </CancelCommandTemplate>
             </DataGridCommandColumn>
 
-            <AuthorizeView Context="Authorize" Roles="Customer, CompetitionAdmin, SystemAdmin">
-                <Authorized>
-                    <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionUrlAvatar)" Caption="URL avatar" Filterable="false" Sortable="false" Editable>
-                        <DisplayTemplate>
-                            @{
-                                var eventDtoAdmin = context as CompetitionDto;
-                                <img src="@eventDtoAdmin.CompetitionUrlAvatar"
-                                 class="rounded-circle img-fluid"
-                                 style="width: 40px;">
-                            }
-                        </DisplayTemplate>
-                    </DataGridColumn>
-                </Authorized>
-            </AuthorizeView>
-
-            <AuthorizeView Context="Authorize" Roles="Simple_user">
+            <AuthorizeView Context="Authorize" Roles="Customer">
                 <Authorized>
                     <DataGridColumn TItem="CompetitionDto" Field="@nameof(competitionDto.CompetitionId)" Caption="Join" Filterable="false" Sortable="false">
                         <DisplayTemplate>
@@ -97,7 +81,6 @@ else
                         <DisplayTemplate>
                             @{
                                 var competitionDto = context as CompetitionDto;
-
                                 <a href="/Competitions/competition/@competitionDto.CompetitionId">@competitionDto.CompetitionName </a>
                             }
                         </DisplayTemplate>
@@ -151,6 +134,7 @@ else
                 <Authorized>
 
                     <Blazorise.Bootstrap.Button Color="Color.Success" Clicked="context.NewCommand.Clicked">New</Blazorise.Bootstrap.Button>
+                    <Blazorise.Bootstrap.Button Color="Color.Primary" Disabled="(competitionDto is null)" Clicked="context.EditCommand.Clicked">Edit</Blazorise.Bootstrap.Button>
                     <Blazorise.Bootstrap.Button Color="Color.Danger" Disabled="(competitionDto is null)" Clicked="context.DeleteCommand.Clicked">Delete</Blazorise.Bootstrap.Button>
 
                 </Authorized>
@@ -346,4 +330,40 @@ else
 
         StateHasChanged();
     }
+
+    //private async Task UpdateCompetition(int competitionId)
+    //{
+    //    var newCompetition = rowInserted.Item;
+
+    //    var userId = await UserToken.GetUserIdAsync();
+    //    if (userId != null)
+    //    {
+    //        newCompetition.CompetitionStatusId = 1;
+    //        newCompetition.CreateUserId = (int)userId;
+    //        newCompetition.UpdateUserId = (int)userId;
+    //    }
+    //    else
+    //    {
+    //        messageError = "User not fonded in database";
+    //        snackbarError.Show();
+    //        return;
+    //    }
+
+    //    var json = JsonConvert.SerializeObject(newCompetition);
+    //    var data = new StringContent(json, Encoding.UTF8, "application/json");
+    //    var response = await client.PostAsJsonAsync("api/Competitions/addCompetition", newCompetition);
+
+    //    if ((int)response.StatusCode == StatusCodes.Status200OK)
+    //    {
+    //        messageSuccess = "Competiton created!";
+    //        snackbarSuccess.Show();
+    //    }
+    //    else
+    //    {
+    //        messageError = "Error: Competiton not created!";
+    //        snackbarError.Show();
+    //    }
+
+    //    StateHasChanged(); ();
+    //}
 }

@@ -7,7 +7,6 @@
 @inject AuthenticationStateProvider AuthState
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IGetUserIdAsync UserToken
-@inject Token Token
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IAuthorizationService AuthService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -71,14 +70,12 @@ else
 }
 
 @code {
-    private int counter = 1;
     private string loading = "";
     private List<UserDto>? usersDto = new List<UserDto>();
     [Parameter]
     public int competitionId { get; set; }
     [Parameter]
     public UserDto userDto { get; set; }
-    private string? token;
     HttpClient client;
 
     protected override async Task OnInitializedAsync()

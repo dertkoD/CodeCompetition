@@ -6,18 +6,13 @@ namespace CompetitionLibrary.Models
 	{
 		public int CompetitionId { get; set; }
 
-
-		[Required(ErrorMessage = "Fill in the Hackathon name field\r\n")]
-		[StringLength(100, MinimumLength = 3, ErrorMessage = "Hackathon name must be between 3 and 100 characters")]
+		[Required(ErrorMessage = "Fill in the Competition name field\r\n")]
+		[StringLength(100, MinimumLength = 3, ErrorMessage = "Competition name must be between 3 and 100 characters")]
 		public string CompetitionName { get; set; } = null!;
 
 		[Required(ErrorMessage = "Fill in the description name field\r\n")]
 		[StringLength(2000, MinimumLength = 10, ErrorMessage = "Description must be between 10 and 2000 characters")]
 		public string CompetitionDescription { get; set; } = null!;
-
-		[Required(ErrorMessage = "Fill in the url field\r\n")]
-		[StringLength(2000, MinimumLength = 5, ErrorMessage = "url must be between 5 and 2000 characters")]
-		public string? CompetitionUrlAvatar { get; set; }
 
 		[Required(ErrorMessage = "Fill in the start time  field\r\n")]
 		public DateTime CompetitionStartTime { get; set; }

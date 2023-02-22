@@ -23,8 +23,6 @@ namespace CompetitionLibrary.Models
 
         public int ObjStatusId { get; set; }
 
-        public bool TeamTwitterPoint { get; set; }
-
         public int CompetitionTeamPoint { get; set; }
 
         public virtual Competition Competition { get; set; } = null!;
