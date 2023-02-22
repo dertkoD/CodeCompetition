@@ -27,7 +27,7 @@ namespace BackEndCompetition.Controllers
             try
             {
                 var competitionTaskCompet = _mapper.Map<CompetitionTaskCompet>(newCompetitionTaskCompet);
-                await _competitionTaskCompetRepositories.AssignMission(competitionTaskCompet);
+                await _competitionTaskCompetRepositories.AssignTask(competitionTaskCompet);
                 return new JsonResult(Ok("Task assigned"));
 
             }

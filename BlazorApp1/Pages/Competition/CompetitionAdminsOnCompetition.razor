@@ -2,7 +2,6 @@
 @using System.Text.Json
 <h3>CompetitionAdminsOnCompetition</h3>
 
-@inject Token Token
 @inject IHttpClientFactory ClientFactory
 @inject Authentication Authentication
 
@@ -43,7 +42,7 @@
                 </DisplayTemplate>
             </DataGridColumn>
 
-            <DataGridCommandColumn />AssignCompetitionAdmin
+            <DataGridCommandColumn />Assign Competition Admin
 
             <DataGridColumn TItem="UserDto" Field="@nameof(userDto.UserId)" Filterable="false" Caption="Assign Competition Admin">
                 <DisplayTemplate>

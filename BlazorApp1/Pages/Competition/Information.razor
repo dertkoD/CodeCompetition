@@ -6,7 +6,6 @@
 @inject IHttpClientFactory ClientFactory
 @inject HttpClient Http
 @inject IGetUserIdAsync UserToken
-@inject Token Token
 @inject Authentication Authentication
 
 @if (competitionDto == null)
@@ -25,7 +24,7 @@ else
                             <div class="card-body text-center">
                                 <h5 class="my-3">@competitionDto.CompetitionName</h5>
 
-                                <AuthorizeView Context="Authorize" Roles="Simple_user">
+                                <AuthorizeView Context="Authorize" Roles="Customer">
                                     <Authorized>
                                         @if (competitionDto.IsParticipant == false)
                                         {

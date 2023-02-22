@@ -44,7 +44,7 @@ namespace BackEndCompetition.Controllers
 
 		[HttpGet("getCustomers")]
 		[Authorize(Roles = "SystemAdmin")]
-		public async Task<JsonResult> GetSimpleUsers(string? roleId)
+		public async Task<JsonResult> GetCustomers(string? roleId)
 		{
 			try
 			{

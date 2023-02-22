@@ -19,7 +19,7 @@ namespace CompetitionLibrary.Repositories
             
         }
 
-        public async Task AssignMission(CompetitionTaskCompet competitionTaskCompet)
+        public async Task AssignTask(CompetitionTaskCompet competitionTaskCompet)
         {
             try
             {
