@@ -27,11 +27,10 @@ builder.Services
         {
             OnTokenValidated = (context) =>
             {
-                //var token = context.TokenEndpointResponse?.AccessToken;
                 var token = context.TokenEndpointResponse?.IdToken;
                 var claims = new List<Claim>
                     {
-                        new("jwt_token", token!) // context.SecurityToken.RawPayload)
+                        new("jwt_token", token!)
                     };
 
                 var appIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -73,7 +72,7 @@ builder.Services
 builder.Services.AddAuthorization(options => {
     options.AddPolicy("NoRolePolicy", policy => policy.RequireAssertion(context => !context.User.HasClaim(c => c.Type == ClaimTypes.Role)));
 });
-// Add services to the container.
+
 builder.Services.AddSingleton<IGetUserIdAsync, GetIdUsersFromToken>();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
@@ -104,7 +103,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

@@ -90,7 +90,6 @@ namespace BackEndCompetition.Controllers
 		[Authorize(Roles = "SystemAdmin")]
 		public async Task<JsonResult> DeleteUser(int userId)
 		{
-
 			try
 			{
 				await _dbRepositories.Delete(userId, await _userHelp.GetId());
